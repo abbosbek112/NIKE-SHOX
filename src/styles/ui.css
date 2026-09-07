@@ -1,0 +1,806 @@
+/* ==========================================================================
+   Chrome — everything that persists over the film: the loader, the chapter
+   rail, the cursor, the two overlays, the footer, and the no-WebGL page.
+
+   These components share one rule: they are quieter than the product. No
+   coloured surfaces, no shadows, one radius, hairline borders. The only
+   saturated colour is --c-signal, and it is reserved for the bag count and the
+   marquee's separator.
+   ========================================================================== */
+
+/* --- loader ---------------------------------------------------------------- */
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  background: var(--c-void);
+  transition: opacity var(--d-slow) var(--ease-out);
+}
+
+.loader--out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-6);
+  width: min(100%, 34rem);
+}
+
+.loader__mark {
+  color: var(--c-text);
+}
+
+/* The wordmark's mask is opened by a keyframe rather than by GSAP: this is the
+   one reveal on the page that has to play while the main thread is busy building
+   geometry, and a compositor-only animation is the only thing that can. */
+.loader__mark .reveal-line > span {
+  animation: mark-rise var(--d-cinematic) var(--ease-out) 120ms both;
+}
+
+@keyframes mark-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.loader__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+}
+
+.loader__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 1px;
+  overflow: hidden;
+  background: var(--c-line);
+}
+
+.loader__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--c-text);
+  /* Written from the rAF loop; starts empty so the first frame cannot flash full. */
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.loader__count {
+  flex: 0 0 auto;
+  font-size: var(--t-label);
+  letter-spacing: 0.08em;
+  color: var(--c-text-dim);
+}
+
+.loader__note {
+  align-self: flex-start;
+  color: var(--c-text-faint);
+}
+
+/* --- chapter rail ----------------------------------------------------------
+   Fixed to the left edge, above the film, below the nav. Hidden below the
+   breakpoint: on a phone it would compete with the copy for the same 24px, and
+   the mobile sheet already lists all seven chapters.
+   ----------------------------------------------------------------------- */
+
+.rail {
+  position: fixed;
+  top: 50%;
+  left: var(--rail);
+  z-index: var(--z-rail);
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  transform: translate3d(-1.5rem, -50%, 0);
+  opacity: 0;
+  transition:
+    opacity var(--d-slow) var(--ease-out),
+    transform var(--d-slow) var(--ease-out);
+}
+
+.rail.is-visible {
+  opacity: 1;
+  transform: translate3d(0, -50%, 0);
+}
+
+.rail__track {
+  position: relative;
+  width: 1px;
+  height: 8.5rem;
+  overflow: hidden;
+  background: var(--c-line);
+}
+
+.rail__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--c-text);
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.rail__dot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-1) 0;
+  color: var(--c-text-faint);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.rail__dot-mark {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: var(--r-pill);
+  background: var(--c-line-strong);
+  transition:
+    background-color var(--d-fast) var(--ease-out),
+    transform var(--d-fast) var(--ease-out);
+}
+
+/* The label is the hover affordance: the dots stay a column of dots until you
+   reach for them. It is deliberately *not* revealed by `.is-active` — an
+   always-expanded label would sit permanently over the left-aligned chapters'
+   copy, and the accent dot plus the progress fill already say where you are. The
+   shadow is for the moment it does overlap, on hover. */
+.rail__dot-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  text-shadow: 0 1px 14px var(--c-void);
+  transition:
+    max-width var(--d-base) var(--ease-out),
+    opacity var(--d-fast) var(--ease-out);
+}
+
+.rail__dot:hover,
+.rail__dot:focus-visible,
+.rail__dot.is-active {
+  color: var(--c-text);
+}
+
+.rail__dot:hover .rail__dot-mark,
+.rail__dot:focus-visible .rail__dot-mark {
+  background: var(--c-text);
+}
+
+.rail__dot.is-active .rail__dot-mark {
+  background: var(--c-accent);
+  transform: scale(1.6);
+}
+
+.rail__dot:hover .rail__dot-label,
+.rail__dot:focus-visible .rail__dot-label {
+  max-width: 9rem;
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .rail {
+    display: none;
+  }
+}
+
+/* --- cursor ----------------------------------------------------------------
+   Mounted only where the pointer is fine. `has-cursor` is added by the
+   component once its own cursor is on screen, so a browser that never runs the
+   effect keeps the system cursor.
+   ----------------------------------------------------------------------- */
+
+html.has-cursor,
+html.has-cursor * {
+  cursor: none;
+}
+
+.cursor {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cursor);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease-out);
+}
+
+.cursor.is-visible {
+  opacity: 1;
+}
+
+/* The dot is the thing you aim with, so it is never damped and never scaled.
+   Centring is done with negative margins because the transform belongs to the
+   rAF loop. */
+.cursor__dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: var(--r-pill);
+  background: var(--c-text);
+  transition: opacity var(--d-fast) var(--ease-out);
+}
+
+/* A zero-size anchor: the ring's transform slot is taken by the rAF loop, so
+   everything that scales is drawn by the pseudo-element instead. */
+.cursor__ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.cursor__ring::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -1.125rem 0 0 -1.125rem;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-pill);
+  transition:
+    transform var(--d-fast) var(--ease-out),
+    border-color var(--d-fast) var(--ease-out),
+    background-color var(--d-fast) var(--ease-out);
+}
+
+.cursor__label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  color: var(--c-ink);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--d-fast) var(--ease-out);
+}
+
+/* Both labelled states fill the ring and hide the dot: the disc is now the
+   cursor, and a dot floating inside it would read as two pointers. */
+.cursor.is-open .cursor__ring::before,
+.cursor.is-drag .cursor__ring::before {
+  transform: scale(2.15);
+  border-color: transparent;
+  background: var(--c-text);
+}
+
+.cursor.is-open .cursor__label,
+.cursor.is-drag .cursor__label {
+  opacity: 1;
+}
+
+.cursor.is-open .cursor__dot,
+.cursor.is-drag .cursor__dot {
+  opacity: 0;
+}
+
+/* Pressed: the ring tightens. On a bare cursor that reads as a click; mid-drag
+   it reads as a grip. */
+.cursor.is-down .cursor__ring::before {
+  transform: scale(0.72);
+}
+
+.cursor.is-down.is-open .cursor__ring::before,
+.cursor.is-down.is-drag .cursor__ring::before {
+  transform: scale(1.85);
+}
+
+/* --- overlays: shared scrim -----------------------------------------------
+   The bag and the specification are the same object with different contents:
+   a scrim that dims the film and a panel that arrives from the right (from the
+   bottom on a phone, where the right edge is not a place a thumb can reach).
+   ----------------------------------------------------------------------- */
+
+.drawer,
+.specs {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  /* Not display:none — the panels slide, and a hidden element cannot. */
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility var(--d-base) step-end;
+}
+
+.drawer.is-open,
+.specs.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transition-timing-function: step-start;
+}
+
+.drawer__scrim,
+.specs__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 5, 7, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--d-base) var(--ease-out);
+}
+
+.drawer.is-open .drawer__scrim,
+.specs.is-open .specs__scrim {
+  opacity: 1;
+}
+
+.drawer__panel,
+.specs__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(28rem, 100%);
+  padding: calc(var(--nav-h) + var(--s-4)) var(--s-6) var(--s-6);
+  background: var(--c-ink-2);
+  border-left: 1px solid var(--c-line);
+  transform: translate3d(100%, 0, 0);
+  transition: transform var(--d-base) var(--ease-out);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.specs__panel {
+  width: min(34rem, 100%);
+  gap: var(--s-5);
+}
+
+.drawer.is-open .drawer__panel,
+.specs.is-open .specs__panel {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Below the breakpoint the panels come up from the bottom and stop short of the
+   top, so the shoe is still visible behind them and the close control is inside
+   thumb reach. */
+@media (max-width: 860px) {
+  .drawer__panel,
+  .specs__panel {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 88%;
+    padding: var(--s-6) var(--gutter) var(--s-7);
+    border-left: none;
+    border-top: 1px solid var(--c-line);
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+/* --- bag ------------------------------------------------------------------- */
+
+.drawer__head,
+.specs__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+
+.drawer__close,
+.specs__close {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-text-faint);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.drawer__close:hover,
+.specs__close:hover {
+  color: var(--c-text);
+}
+
+.drawer__empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-5);
+  padding: var(--s-7) 0;
+}
+
+.drawer__list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) 0;
+}
+
+/* Explicit areas rather than auto-placement: the DOM order is body, quantity,
+   price, remove, and sparse packing would put the price on the wrong row. */
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: center;
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+
+.line__body {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.line__name {
+  color: var(--c-text);
+}
+
+.line__meta {
+  color: var(--c-text-dim);
+}
+
+.line__price {
+  grid-area: 1 / 2;
+  justify-self: end;
+  color: var(--c-text);
+}
+
+.line__qty {
+  grid-area: 2 / 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--c-line-mid);
+  border-radius: var(--r-sm);
+}
+
+.line__step {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--c-text-dim);
+  transition:
+    color var(--d-fast) var(--ease-out),
+    background-color var(--d-fast) var(--ease-out);
+}
+
+.line__step:hover:not(:disabled) {
+  color: var(--c-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.line__step:disabled {
+  color: var(--c-text-faint);
+}
+
+.line__count {
+  min-width: 2rem;
+  font-size: var(--t-small);
+  text-align: center;
+}
+
+.line__remove {
+  grid-area: 2 / 2;
+  justify-self: end;
+  color: var(--c-text-faint);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.line__remove:hover {
+  color: var(--c-text);
+}
+
+.drawer__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-top: auto;
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-line);
+}
+
+.drawer__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  color: var(--c-text);
+}
+
+.drawer__notice {
+  color: var(--c-text-faint);
+  letter-spacing: 0.1em;
+  text-transform: none;
+}
+
+/* --- specification --------------------------------------------------------- */
+
+.specs__title {
+  color: var(--c-text);
+}
+
+.specs__copy {
+  color: var(--c-text-dim);
+}
+
+.specs__table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-bottom: var(--s-4);
+}
+
+.specs__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 38%) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: baseline;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.specs__row dd {
+  color: var(--c-text);
+}
+
+/* --- footer ----------------------------------------------------------------
+   Positioned and opaque on purpose. The stage is `position: fixed` with
+   `z-index: 0`, which paints above the backgrounds of in-flow blocks — without a
+   stacking position of its own the footer would have the 3D scene sliding
+   through it.
+   ----------------------------------------------------------------------- */
+
+.footer {
+  position: relative;
+  z-index: var(--z-content);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-9);
+  padding: var(--s-9) var(--gutter) var(--s-6);
+  background: var(--c-ink);
+  border-top: 1px solid var(--c-line);
+}
+
+.footer__top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.footer__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  text-align: left;
+}
+
+.footer__mark-line {
+  color: var(--c-text);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.footer__mark:hover .footer__mark-line,
+.footer__mark:focus-visible .footer__mark-line {
+  color: var(--c-accent);
+}
+
+.footer__mark-cue {
+  color: var(--c-text-faint);
+}
+
+.footer__line {
+  max-width: 34ch;
+}
+
+.footer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--s-7) var(--gutter);
+}
+
+.footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.footer__col ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.footer__heading {
+  color: var(--c-text-faint);
+}
+
+.footer__item {
+  color: var(--c-text-dim);
+}
+
+/* Long prose wearing `.type-micro`, same as the material notes. */
+.footer__note {
+  max-width: 44ch;
+  font-size: var(--t-small);
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  text-transform: none;
+  color: var(--c-text-faint);
+}
+
+.footer__base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-line);
+}
+
+@media (min-width: 861px) {
+  .footer__top {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-7);
+  }
+
+  .footer__col--note {
+    grid-column: span 2;
+  }
+}
+
+/* --- no-WebGL product page -------------------------------------------------
+   Plain flow, no sticky frames, no scroll choreography. The one thing that has
+   already failed is the thing this page must not depend on.
+   ----------------------------------------------------------------------- */
+
+.fallback {
+  position: relative;
+  z-index: var(--z-content);
+  padding: calc(var(--nav-h) + var(--s-8)) var(--gutter) var(--s-9);
+  background: var(--c-ink);
+}
+
+.fallback__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-width: 62rem;
+  margin-bottom: var(--s-9);
+}
+
+.fallback__eyebrow {
+  color: var(--c-text-faint);
+}
+
+.fallback__title {
+  color: var(--c-text);
+}
+
+.fallback__sub {
+  max-width: 40ch;
+}
+
+.fallback__note {
+  max-width: 52ch;
+  font-size: var(--t-small);
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  text-transform: none;
+  color: var(--c-text-dim);
+}
+
+.fallback__body {
+  display: grid;
+  gap: var(--s-9) var(--gutter);
+}
+
+.fallback__story {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  min-width: 0;
+}
+
+.fallback__chapter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-line);
+}
+
+.fallback__ordinal {
+  color: var(--c-accent);
+}
+
+.fallback__headline {
+  color: var(--c-text);
+}
+
+.fallback__copy {
+  max-width: 54ch;
+}
+
+.fallback__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5) var(--s-7);
+  margin-top: var(--s-2);
+}
+
+.fallback__metrics li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.fallback__specs,
+.fallback__metrics li span:last-child {
+  color: var(--c-text-faint);
+}
+
+.fallback__specs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+.fallback__specs > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 32%) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: baseline;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.fallback__specs dd {
+  color: var(--c-text);
+}
+
+@media (min-width: 861px) {
+  .fallback__body {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+    align-items: start;
+  }
+
+  /* The panel follows the story down the page: on this route it is the only way
+     to buy, and it should never be a scroll away. */
+  .fallback__shop {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--s-5));
+  }
+}

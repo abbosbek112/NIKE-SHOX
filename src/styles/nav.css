@@ -1,0 +1,264 @@
+/* ==========================================================================
+   Navigation — the header, and the full-screen sheet it opens on small screens.
+
+   The header carries no rule of its own over the hero: a hairline across the top
+   of a full-bleed shot is the fastest way to make a film look like a web page.
+   It grows one (`.is-lifted`) as soon as the first chapter is behind you.
+   ========================================================================== */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-5);
+  height: var(--nav-h);
+  padding: 0 var(--gutter);
+  opacity: 0;
+  transform: translate3d(0, -100%, 0);
+  transition:
+    opacity var(--d-slow) var(--ease-out),
+    transform var(--d-slow) var(--ease-out),
+    background-color var(--d-base) var(--ease-out),
+    border-color var(--d-base) var(--ease-out);
+  border-bottom: 1px solid transparent;
+}
+
+.nav.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.nav.is-lifted {
+  background: color-mix(in srgb, var(--c-void) 72%, transparent);
+  border-bottom-color: var(--c-line);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* The sheet covers the viewport, and the burger — which turns into the X that
+   closes it — lives in here. Without this the header is painted underneath, so
+   the only way out of the menu on a phone is to navigate somewhere. Raised only
+   while the menu is open, so the bag and the specification panel still come over
+   the header the way they should. */
+.nav.is-raised {
+  z-index: var(--z-nav-raised);
+}
+
+/* --- wordmark ------------------------------------------------------------ */
+
+.nav__mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+}
+
+.nav__mark-brand {
+  color: var(--c-text);
+  font-weight: 700;
+}
+
+.nav__mark-name {
+  color: var(--c-text-dim);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.nav__mark:hover .nav__mark-name {
+  color: var(--c-accent);
+}
+
+/* --- destinations -------------------------------------------------------- */
+
+.nav__links ul {
+  display: flex;
+  align-items: center;
+  gap: clamp(var(--s-4), 2.2vw, var(--s-7));
+}
+
+.nav__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55em;
+  padding: var(--s-2) 0;
+  color: var(--c-text-faint);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.nav__link-ordinal {
+  font-size: var(--t-micro);
+  opacity: 0.6;
+}
+
+.nav__link:hover {
+  color: var(--c-text);
+}
+
+.nav__link.is-active {
+  color: var(--c-text);
+}
+
+.nav__link.is-active .nav__link-ordinal {
+  color: var(--c-accent);
+  opacity: 1;
+}
+
+/* --- bag + burger -------------------------------------------------------- */
+
+.nav__end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.nav__cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  height: 2.25rem;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--c-line-mid);
+  border-radius: var(--r-pill);
+  color: var(--c-text);
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background-color var(--d-fast) var(--ease-out);
+}
+
+.nav__cart:hover {
+  border-color: var(--c-line-strong);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav__cart-count {
+  min-width: 1.35em;
+  padding: 0.15em 0;
+  border-radius: var(--r-pill);
+  background: var(--c-signal);
+  color: #fff;
+  font-size: var(--t-micro);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.nav__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.nav__burger-bar {
+  display: block;
+  width: 18px;
+  height: 1px;
+  margin: 0 auto;
+  background: var(--c-text);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+
+/* The two bars cross into an X. Selected as "a bar" and "a bar after a bar"
+   rather than by type position: the button's first child is the visually-hidden
+   label, which is also a span, so `:first-of-type` picked the label and left the
+   top bar horizontal. */
+.nav__burger.is-open .nav__burger-bar {
+  transform: translateY(3px) rotate(45deg);
+}
+
+.nav__burger.is-open .nav__burger-bar + .nav__burger-bar {
+  transform: translateY(-3px) rotate(-45deg);
+}
+
+/* --- mobile sheet --------------------------------------------------------
+   Lists every chapter, not the four nav destinations: on a phone the scroll is
+   long and jumping straight to "Materials" is worth more than a tidy list.
+   ----------------------------------------------------------------------- */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(var(--nav-h) + var(--s-6)) var(--gutter) var(--s-7);
+  background: var(--c-void);
+  /* Not `display: none`: the sheet slides, and a hidden element cannot. */
+  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(0, -2%, 0);
+  transition:
+    opacity var(--d-base) var(--ease-out),
+    transform var(--d-base) var(--ease-out),
+    visibility var(--d-base) step-end;
+}
+
+.sheet.is-open {
+  visibility: visible;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition-timing-function: var(--ease-out), var(--ease-out), step-start;
+}
+
+.sheet__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.sheet__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-3) 0;
+  text-align: left;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.sheet__ordinal {
+  color: var(--c-text-faint);
+}
+
+.sheet__label {
+  color: var(--c-text);
+}
+
+.sheet__item:active .sheet__label {
+  color: var(--c-accent);
+}
+
+.sheet__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-line);
+}
+
+/* --- breakpoint ---------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .nav__links {
+    display: none;
+  }
+
+  .nav__burger {
+    display: flex;
+  }
+}
+
+@media (min-width: 861px) {
+  /* The sheet cannot be reached above the breakpoint, and leaving it in the
+     layer stack would let a stale `is-open` cover a desktop page. */
+  .sheet {
+    display: none;
+  }
+}
+

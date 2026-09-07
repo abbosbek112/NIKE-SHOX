@@ -1,0 +1,211 @@
+/* ==========================================================================
+   Typography — an editorial athletic voice: heavy compressed display type,
+   monospaced technical labels, and generous negative space between them.
+   ========================================================================== */
+
+.type-mega,
+.type-display,
+.type-h1,
+.type-h2,
+.type-h3 {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.type-mega {
+  font-size: var(--t-mega);
+  font-weight: 900;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-mega);
+  font-stretch: 100%;
+}
+
+.type-display {
+  font-size: var(--t-display);
+  font-weight: 900;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+}
+
+.type-h1 {
+  font-size: var(--t-h1);
+  font-weight: 800;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-head);
+}
+
+.type-h2 {
+  font-size: var(--t-h2);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: var(--tr-head);
+}
+
+.type-h3 {
+  font-size: var(--t-h3);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.01em;
+}
+
+.type-lead {
+  font-size: var(--t-lead);
+  font-weight: 400;
+  line-height: 1.42;
+  letter-spacing: -0.008em;
+  color: var(--c-text-dim);
+  text-wrap: pretty;
+}
+
+.type-body {
+  font-size: var(--t-body);
+  color: var(--c-text-dim);
+  text-wrap: pretty;
+}
+
+.type-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--c-text-faint);
+}
+
+.type-micro {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--c-text-faint);
+}
+
+.type-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.text-bright {
+  color: var(--c-text);
+}
+
+.text-accent {
+  color: var(--c-accent);
+}
+
+.text-signal {
+  color: var(--c-signal);
+}
+
+/* --- split reveal scaffolding --------------------------------------------
+   Structure:  <span class="reveal" aria-label="…">
+                 <span class="reveal-line"><span aria-hidden="true">…</span></span>
+               </span>
+   GSAP animates the inner span's translate; the wrapper's aria-label keeps the
+   whole phrase readable to assistive tech as one string.
+   ----------------------------------------------------------------------- */
+
+.reveal {
+  display: block;
+}
+
+/* Word-split headlines lay their masks out as a wrapping row. Without this each
+   word would be a block and every word would take its own line. */
+.reveal--words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.26em;
+}
+
+/* Each mask is a flex item with `overflow: hidden`, which resolves its automatic
+   minimum size to 0 instead of min-content — so a word wider than the copy
+   column silently shrank and clipped its own glyphs rather than wrapping. Pin
+   the basis to the content and let the row wrap; `max-width` keeps a word longer
+   than the whole measure inside the frame instead of forcing it to overflow. */
+.reveal--words > .reveal-line {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.reveal-line {
+  display: block;
+  overflow: hidden;
+  /* A hair of vertical padding stops descenders being clipped by the mask. */
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+
+.reveal-line > span {
+  display: block;
+  transform: translate3d(0, 110%, 0);
+  will-change: transform;
+}
+
+.reveal.is-static .reveal-line > span {
+  transform: none;
+}
+
+/* Safety net. Copy hidden below a mask that nothing ever opens is the worst
+   failure this pattern has, so when motion is off the masks start open whether
+   or not the component was told to render statically. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-line > span {
+    transform: none;
+  }
+}
+
+/* --- eyebrow with rule --------------------------------------------------- */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.eyebrow::before {
+  content: '';
+  width: clamp(1.5rem, 3vw, 3rem);
+  height: 1px;
+  background: var(--c-accent);
+  opacity: 0.7;
+}
+
+.eyebrow--bare::before {
+  display: none;
+}
+
+/* --- metrics ------------------------------------------------------------- */
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.metric__value {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric__label {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-text-faint);
+}

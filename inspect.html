@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shox geometry inspector</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #16181c;
+        color: #fff;
+        font: 11px/1 ui-monospace, monospace;
+        overflow: hidden;
+      }
+      #wrap {
+        position: relative;
+        width: 1920px;
+        height: 640px;
+      }
+      canvas {
+        display: block;
+      }
+      .label {
+        position: absolute;
+        padding: 3px 6px;
+        background: #000a;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+      #stats {
+        position: absolute;
+        left: 0;
+        top: 640px;
+        padding: 6px 8px;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrap"></div>
+    <div id="stats">building…</div>
+    <script type="module" src="/src/dev/inspect.ts"></script>
+  </body>
+</html>

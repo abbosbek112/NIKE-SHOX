@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Product controls — the shop panel, the colourway swatches, the size row.
+
+   These are the only components on the page that look like commerce, so they
+   are deliberately the quietest: hairlines, one radius, no card shadows. The
+   panel earns a translucent backdrop because it sits directly over the lit
+   sneaker and its numbers have to stay readable while the camera moves.
+   ========================================================================== */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-5);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--c-void) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.panel__name {
+  color: var(--c-text-dim);
+}
+
+.panel__price {
+  margin-top: var(--s-2);
+  color: var(--c-text);
+}
+
+.panel__sku {
+  color: var(--c-text-faint);
+  white-space: nowrap;
+}
+
+/* Two pills where there is room for two, stacked where there is not. */
+.panel__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--s-3);
+}
+
+/* The notice carries live status ("Added · Chrome · EU 43"), so it reserves its
+   own line height — otherwise every flash would reflow the panel under the
+   pointer. */
+.panel__notice {
+  min-height: 1.2em;
+  color: var(--c-text-dim);
+}
+
+.panel__specs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  align-self: flex-start;
+  padding: var(--s-2) 0;
+  color: var(--c-text-faint);
+  transition: color var(--d-fast) var(--ease-out);
+}
+
+.panel__specs > span:last-child {
+  transition: transform var(--d-fast) var(--ease-out);
+}
+
+.panel__specs:hover,
+.panel__specs:focus-visible {
+  color: var(--c-text);
+}
+
+.panel__specs:hover > span:last-child,
+.panel__specs:focus-visible > span:last-child {
+  transform: translate3d(0.25rem, 0, 0);
+}
+
+/* --- colourway swatches ---------------------------------------------------
+   `--grid` is the standalone selector in the colour chapter; `--rail` is the
+   compact row inside the shop panel. Same markup, two densities.
+   ----------------------------------------------------------------------- */
+
+.swatches {
+  --chip: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.swatches--grid {
+  --chip: 3.25rem;
+  gap: var(--s-5);
+}
+
+.swatches__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.swatch {
+  width: var(--chip);
+  height: var(--chip);
+  padding: 3px;
+  border: 1px solid var(--c-line-mid);
+  border-radius: var(--r-pill);
+  /* Two rings, because the background behind this control is a lit product the
+     user can rotate: the light border reads over a dark upper, and this dark halo
+     plus its falloff is what keeps the same swatch legible over chrome columns.
+     Without it the onyx chip loses its edge and reads as a smudge. */
+  box-shadow:
+    0 0 0 1px rgba(3, 4, 6, 0.62),
+    0 2px 12px rgba(3, 4, 6, 0.5);
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    transform var(--d-fast) var(--ease-out);
+}
+
+.swatch:hover {
+  border-color: var(--c-line-strong);
+  transform: scale(1.06);
+}
+
+/* The ring, not a tick: a mark drawn on top of a finish would misrepresent the
+   colour the swatch exists to show. */
+.swatch.is-active {
+  border-color: var(--c-text);
+}
+
+.swatch__chip {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-pill);
+  /* A dark finish on a dark panel needs an edge of its own. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.swatches__readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.swatches__name {
+  color: var(--c-text);
+}
+
+.swatches__code {
+  color: var(--c-text-faint);
+}
+
+/* --- sizes ---------------------------------------------------------------- */
+
+.sizes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.sizes__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  color: var(--c-text-dim);
+}
+
+.sizes__hint {
+  color: var(--c-text-faint);
+}
+
+/* auto-fit rather than a fixed six columns: the same row has to work in the
+   panel, in the drawer's width and on a 390px phone. */
+.sizes__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
+  gap: var(--s-2);
+}
+
+.size {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  border: 1px solid var(--c-line-mid);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background-color var(--d-fast) var(--ease-out),
+    color var(--d-fast) var(--ease-out);
+}
+
+.size:hover {
+  border-color: var(--c-line-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.size.is-active {
+  border-color: var(--c-text);
+  background: var(--c-text);
+  color: var(--c-ink);
+}
+
+/* Sold out stays legible and stays focusable — see SizeSelector for why. The
+   rule is drawn rather than applied as `line-through` so it reads as a stock
+   state instead of a price edit. */
+.size.is-out {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--c-line);
+  color: var(--c-text-faint);
+  cursor: not-allowed;
+}
+
+.size.is-out::after {
+  content: '';
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 50%;
+  height: 1px;
+  background: var(--c-line-strong);
+  transform: rotate(-24deg);
+}
+
+.size.is-out:hover {
+  border-color: var(--c-line);
+  background: none;
+}
+
+@media (max-width: 860px) {
+  /* Six sizes in a phone-width panel auto-fit to five and leave 45 alone on a
+     second row. Three columns is two even rows — a grid rather than a wrap. */
+  .sizes__row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

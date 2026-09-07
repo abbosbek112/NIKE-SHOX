@@ -1,0 +1,145 @@
+/* ==========================================================================
+   Layout — the page's three planes and the one button style.
+
+   Plane 1  .stage   fixed, full-bleed, the 3D scene. Never scrolls.
+   Plane 2  .film    the seven chapters, scrolling over the stage.
+   Plane 3  .footer  normal flow, opaque, below the film (see ui.css).
+
+   Because the stage is fixed under everything, the film has to let pointer
+   events through or the sneaker could never be dragged. So the film and its
+   sticky frames are transparent to the pointer and only real controls opt back
+   in. The accepted cost is that copy inside the film is not selectable.
+   ========================================================================== */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+  /* pan-y is what lets a horizontal drag rotate the shoe while a vertical
+     swipe still scrolls the page. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Visible for the one frame before the renderer's first clear, and behind a
+     canvas that failed to paint. */
+  background:
+    radial-gradient(120% 90% at 50% 8%, #16191f 0%, rgba(8, 9, 11, 0) 62%),
+    linear-gradient(180deg, #0a0c0f 0%, #050608 100%);
+}
+
+.stage__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.film {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+.film,
+.chapter,
+.chapter__frame {
+  pointer-events: none;
+}
+
+/* Only real controls take the pointer back. Listing them explicitly is safer
+   than a blanket rule: anything not named here cannot accidentally start
+   swallowing drags. */
+.chapter__frame button,
+.chapter__frame a,
+.chapter__frame .panel,
+.chapter__frame .swatches,
+.chapter__frame .sizes {
+  pointer-events: auto;
+}
+
+/* --- button ---------------------------------------------------------------
+   One shape, two weights. The label sits above a wipe that grows from the
+   bottom on hover, which is the site's only decorative transition.
+   ----------------------------------------------------------------------- */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  min-height: 3rem;
+  padding: 0 var(--s-6);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    color var(--d-fast) var(--ease-out),
+    border-color var(--d-fast) var(--ease-out),
+    transform var(--d-instant) var(--ease-out);
+}
+
+.btn > span {
+  position: relative;
+  z-index: 1;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform: translate3d(0, 101%, 0);
+  transition: transform var(--d-base) var(--ease-signal);
+}
+
+.btn:hover::after,
+.btn:focus-visible::after {
+  transform: translate3d(0, 0, 0);
+}
+
+.btn:active {
+  transform: scale(0.985);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  transform: none;
+}
+
+.btn:disabled::after {
+  transform: translate3d(0, 101%, 0);
+}
+
+.btn--solid {
+  background: var(--c-text);
+  color: var(--c-ink);
+}
+
+.btn--solid::after {
+  background: var(--c-signal);
+}
+
+.btn--solid:hover,
+.btn--solid:focus-visible {
+  color: #fff;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--c-text);
+  border: 1px solid var(--c-line-mid);
+}
+
+.btn--ghost::after {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  border-color: var(--c-line-strong);
+}

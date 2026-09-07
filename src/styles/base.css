@@ -1,0 +1,205 @@
+/* ==========================================================================
+   Base — reset, document shell, focus, accessibility primitives
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: auto;
+}
+
+html,
+body {
+  background: var(--c-ink);
+  overflow-x: clip;
+}
+
+/* Set by scroller.ts while an overlay owns the screen. Lenis is stopped at the
+   same moment; this is what stops a trackpad from scrolling the page behind an
+   open drawer. */
+html.is-locked,
+html.is-locked body {
+  overflow: hidden;
+}
+
+body {
+  min-height: 100vh;
+  min-height: calc(var(--vh-unit) * 100);
+  color: var(--c-text);
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  font-weight: 400;
+  line-height: var(--lh-copy);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-variant-ligatures: none;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+::selection {
+  background: var(--c-signal);
+  color: #fff;
+}
+
+/* --- focus -------------------------------------------------------------- */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+/* Over the dark canvas a plain white ring can vanish against a highlight,
+   so pair it with a dark halo. */
+.canvas-focus:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+/* --- a11y utilities ----------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: var(--z-loader);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-text);
+  color: var(--c-ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  transform: translateY(-160%);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline-offset: 2px;
+}
+
+/* --- scrollbar ---------------------------------------------------------- */
+
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--c-ink);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
+
+/* --- reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep opacity transitions — they carry meaning (state changes) and do not
+     induce motion sickness. */
+  .allow-fade,
+  .allow-fade * {
+    transition-duration: var(--d-fast) !important;
+  }
+}
+
+/* --- no-js -------------------------------------------------------------- */
+
+.noscript-shell {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--s-9) var(--gutter);
+  font-family: var(--font-display);
+}
+
+.noscript-shell h1 {
+  font-size: var(--t-display);
+  font-weight: 900;
+  letter-spacing: var(--tr-display);
+  text-transform: uppercase;
+  line-height: var(--lh-tight);
+  margin-bottom: var(--s-4);
+}
+
+.noscript-shell p {
+  color: var(--c-text-dim);
+  margin-bottom: var(--s-4);
+}
