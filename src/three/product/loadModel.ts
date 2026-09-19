@@ -1,7 +1,5 @@
 import { Group, Vector3, type Material, type Mesh, type Object3D } from 'three'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
+import type { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MODEL, PART_NAMES, ZONE_KEYWORDS } from '@/config/model'
 import type { ShoeMaterials } from '@/three/materials/materials'
 import { measureExtents, measureProduct, type Measured } from '@/three/product/measure'
@@ -218,7 +216,17 @@ function adopt(inner: Object3D, materials: ShoeMaterials): { parts: ModelParts; 
  * party involved. KTX2 is deliberately absent: `KTX2Loader` needs a renderer to
  * pick a transcode target, and there is no renderer this early.
  */
-function createLoader(): { loader: GLTFLoader; dispose: () => void } {
+async function createLoader(): Promise<{ loader: GLTFLoader; dispose: () => void }> {
+  // Loaded on demand rather than at module scope: the GLTF/Draco/meshopt stack is
+  // ~0.5 MB of decoder code that only the drop-in-a-GLB path ever needs. Splitting
+  // it here keeps it out of the initial download for the shipped default (no file
+  // present, the procedural shoe), which is the case for every visitor until an
+  // asset is actually added under `public/models/`.
+  const [{ GLTFLoader }, { DRACOLoader }, { MeshoptDecoder }] = await Promise.all([
+    import('three/examples/jsm/loaders/GLTFLoader.js'),
+    import('three/examples/jsm/loaders/DRACOLoader.js'),
+    import('three/examples/jsm/libs/meshopt_decoder.module.js'),
+  ])
   const loader = new GLTFLoader()
   const draco = new DRACOLoader()
   draco.setDecoderPath('/draco/')
@@ -252,7 +260,7 @@ export async function loadProductModel(
 ): Promise<ProductModel | null> {
   if (!(await present(MODEL.url))) return null
 
-  const { loader, dispose } = createLoader()
+  const { loader, dispose } = await createLoader()
   let scene: Group
   try {
     const gltf = await loader.loadAsync(MODEL.url, (event) => {

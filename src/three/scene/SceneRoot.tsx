@@ -11,6 +11,7 @@ import { useExperience } from '@/state/useExperience'
 import { ShoeMaterials } from '@/three/materials/materials'
 import { CameraRig } from '@/three/camera/CameraRig'
 import { PostFX, applyPost, createPostRig } from '@/three/postprocessing/PostFX'
+import type { ProductModel } from '@/three/product/loadModel'
 import { Shoe, applyProduct, createProductRig } from '@/three/product/Shoe'
 import { Backdrop, applyBackdrop, createBackdropRig } from './Backdrop'
 import { Lighting, applyLights, castsShadows, createLightRig } from './Lighting'
@@ -139,9 +140,11 @@ function Choreographer({
 
 export interface SceneRootProps {
   materials: ShoeMaterials
+  /** A loaded GLB, or `null` for the procedural stand-in. */
+  model: ProductModel | null
 }
 
-export function SceneRoot({ materials }: SceneRootProps) {
+export function SceneRoot({ materials, model }: SceneRootProps) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera
   const width = useThree((s) => s.size.width)
   const profile = useExperience((s) => s.perf)
@@ -165,7 +168,7 @@ export function SceneRoot({ materials }: SceneRootProps) {
     <>
       <Backdrop rig={backdrop} profile={profile} slabsRef={attachSlabs} />
       <Lighting rig={lights} profile={profile} />
-      <Shoe rig={product} materials={materials} profile={profile} />
+      <Shoe rig={product} materials={materials} profile={profile} model={model} />
 
       {profile.contactShadows && (
         <ContactShadows

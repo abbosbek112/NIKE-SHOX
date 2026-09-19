@@ -1,6 +1,7 @@
 import { DEFAULT_COLORWAY, colorwayById } from '@/config/product'
 import { ShoeMaterials } from '@/three/materials/materials'
 import { buildShoe } from '@/three/product/geometry'
+import { loadProductModel, type ProductModel } from '@/three/product/loadModel'
 import type { ColorwayId, PerfProfile } from '@/types'
 
 /**
@@ -21,15 +22,23 @@ import type { ColorwayId, PerfProfile } from '@/types'
 
 export interface BootResult {
   materials: ShoeMaterials
+  /** A loaded GLB from `public/models/`, or `null` for the procedural stand-in. */
+  model: ProductModel | null
   triangles: number
 }
 
 /** Weights sum to the share of the bar that runs before the canvas mounts. */
 const W_FONTS = 0.12
-const W_TEXTURES = 0.34
-const W_GEOMETRY = 0.32
+const W_TEXTURES = 0.3
+/**
+ * The GLB download band. Instant (collapses to zero visible time) when no file is
+ * present under `public/models/`, which is the normal case; a real drop-in gets a
+ * proportional slice of the bar as it streams.
+ */
+const W_MODEL = 0.12
+const W_GEOMETRY = 0.24
 /** The remaining 0.22 belongs to shader compilation and the first frame. */
-export const PRE_CANVAS_PROGRESS = W_FONTS + W_TEXTURES + W_GEOMETRY
+export const PRE_CANVAS_PROGRESS = W_FONTS + W_TEXTURES + W_MODEL + W_GEOMETRY
 
 /**
  * Yield long enough for a paint. A double rAF is the reliable way to be *after*
@@ -76,9 +85,21 @@ export async function boot(
   advance(W_TEXTURES)
   await nextPaint()
 
+  // A dropped-in GLB, if one exists. This runs here — on the loading thread,
+  // before the canvas — so the percentage stays a real measure of work and no
+  // Suspense boundary can flash an empty scene. Absent by default: `null`, and the
+  // procedural shoe renders with no other edit anywhere. Needs `materials` to
+  // adopt the model's meshes into the colourway's zones.
+  const modelStart = done
+  const model = await loadProductModel(materials, (fraction) => {
+    onProgress(modelStart + Math.min(1, fraction) * W_MODEL)
+  })
+  advance(W_MODEL)
+  await nextPaint()
+
   const geometry = buildShoe(profile.geometryDetail)
   advance(W_GEOMETRY)
   await nextPaint()
 
-  return { materials, triangles: geometry.triangles }
+  return { materials, model, triangles: geometry.triangles }
 }

@@ -9,6 +9,7 @@ import { detectWebGL } from '@/lib/webgl'
 import { useExperience } from '@/state/useExperience'
 import { Experience, type SceneContext } from '@/three/Experience'
 import type { ShoeMaterials } from '@/three/materials/materials'
+import type { ProductModel } from '@/three/product/loadModel'
 import { CartDrawer } from '@/ui/CartDrawer'
 import { Chapter } from '@/ui/Chapter'
 import { Cursor } from '@/ui/Cursor'
@@ -51,6 +52,7 @@ export function App() {
   // Probed once, before anything mounts a canvas.
   const [webgl] = useState(detectWebGL)
   const [materials, setMaterials] = useState<ShoeMaterials | null>(null)
+  const [model, setModel] = useState<ProductModel | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const revealTimer = useRef<number | null>(null)
 
@@ -91,6 +93,7 @@ export function App() {
           return
         }
         setMaterials(result.materials)
+        setModel(result.model)
       })
       .catch(() => {
         if (alive) failWebGL()
@@ -166,7 +169,7 @@ export function App() {
           <p className="visually-hidden" id="stage-help">
             Drag to rotate the shoe. With this view focused, the arrow keys turn it.
           </p>
-          {materials && <Experience materials={materials} onReady={onReady} />}
+          {materials && <Experience materials={materials} model={model} onReady={onReady} />}
         </div>
 
         <main className="film" id="film">

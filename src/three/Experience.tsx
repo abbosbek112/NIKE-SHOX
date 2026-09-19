@@ -4,6 +4,7 @@ import { PCFShadowMap, type Camera, type Scene, type WebGLRenderer } from 'three
 import { colorwayById } from '@/config/product'
 import { useExperience } from '@/state/useExperience'
 import { ShoeMaterials } from '@/three/materials/materials'
+import type { ProductModel } from '@/three/product/loadModel'
 import { SceneRoot } from '@/three/scene/SceneRoot'
 
 /**
@@ -92,10 +93,12 @@ export interface SceneContext {
 
 export interface ExperienceProps {
   materials: ShoeMaterials
+  /** A loaded GLB, or `null` for the procedural stand-in. */
+  model: ProductModel | null
   onReady: (ctx: SceneContext) => void
 }
 
-export function Experience({ materials, onReady }: ExperienceProps) {
+export function Experience({ materials, model, onReady }: ExperienceProps) {
   const profile = useExperience((s) => s.perf)
   const colorway = useExperience((s) => s.colorway)
 
@@ -141,7 +144,7 @@ export function Experience({ materials, onReady }: ExperienceProps) {
       onCreated={({ gl }) => configure(gl)}
     >
       <ContextGuard />
-      <SceneRoot materials={materials} />
+      <SceneRoot materials={materials} model={model} />
       <Ready onReady={onReady} />
     </Canvas>
   )

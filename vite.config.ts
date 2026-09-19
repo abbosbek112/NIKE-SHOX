@@ -32,6 +32,14 @@ export default defineConfig({
           if (/\/node_modules\/(react|react-dom|scheduler|use-sync-external-store|zustand)\//.test(path)) {
             return 'vendor'
           }
+          // The GLB loader stack (GLTFLoader + Draco + meshopt) is imported
+          // dynamically and only runs when a model file is dropped into
+          // public/models/ — the default ship has none. Leave these modules
+          // unassigned so Rollup splits them into their own async chunk instead of
+          // folding half a megabyte of decoder code into the eager `three` chunk
+          // every visitor downloads. Guarded to the exact subtrees loadModel.ts
+          // imports so nothing else three-adjacent is pulled out.
+          if (/\/node_modules\/three\/examples\/jsm\/(loaders|libs)\//.test(path)) return
           // three, @react-three/*, postprocessing, and everything drei pulls in.
           return 'three'
         },
